@@ -25,17 +25,11 @@ interface ICartRead {
 interface ICartChange {
     /**
      * Changes the state of the cart if new items are added to it by request
-     *
-     * @throws WrongCountCartRequestException - throws if the [count] is less than 0
-     * @throws ProductNotFoundException - throws if the item was not found in
-     * the data source [ICartDataSource.getItemByRequest] from [SingleItem] request
      */
     suspend fun addItem(request: BasketRequest, count: Int = 1)
 
     /**
      * Changes the state of the cart if the items contained in it are removed from it by request
-     *
-     * @throws WrongCountCartRequestException - throws an exception if the [count] is less than 0
      */
     suspend fun removeItem(request: BasketRequest, count: Int = 1)
 
@@ -58,7 +52,28 @@ interface ICartDataSource {
 }
 
 /**
- * TODO
+ * The logic of a standard shopping cart
+ * in an application where there is an opportunity to buy something.
+ *
+ * The basket supports work with two types of products - single and multiple
+ *
+ * An internal modifier is supported for products of each level. It can be null
+ *
+ * It is highly recommended to use the cart via dedicated [ICartRead] or [ICartChange] interfaces
+ *
+ * Internal work with the price in the basket is carried out by converting the
+ * transmitted values to [Long] for greater accuracy of calculations.
+ * When retrieving data, the value is converted back to [Double]
+ *
+ * @throws WrongCountCartRequestException - throws an exception if the [count]
+ * in item request is less than 1
+ *
+ * @throws ProductNotFoundException - throws if the item was not found in
+ * the data source [ICartDataSource.getItemByRequest] from [SingleItem] request
+ *
+ * @property dataSource - instance of [ICartDataSource] that implements the logic
+ * of obtaining the minimum necessary data from external sources for the cart to work
+ * @property divisionValue - the value of the exchangeable currency of the lower level
  */
 class CartService @JvmOverloads constructor(
     private val dataSource: ICartDataSource,
@@ -74,8 +89,8 @@ class CartService @JvmOverloads constructor(
     override fun getCountInCart(request: BasketRequest): Int {
         return state.products.firstOrNull {
             when (request) {
-                is SingleItem -> (it as? SingleBasketModel)?.id == request.itemId && (it as? SingleBasketModel)?.variant == request.variantId
-                is MultipleItem -> (it as? MultipleBasketModel)?.multipleProductId == request.itemId && (it as? MultipleBasketModel)?.multipleItems == request.multipleItems
+                is SingleItem -> it.id == request.itemId && (it as? SingleBasketModel)?.variant == request.variantId
+                is MultipleItem -> it.id == request.itemId && (it as? MultipleBasketModel)?.multipleItems == request.multipleItems
             }
         }?.count ?: 0
     }
@@ -125,14 +140,14 @@ class CartService @JvmOverloads constructor(
             }
             is MultipleItem -> state.products.firstOrNull { product ->
                 product is MultipleBasketModel
-                    && product.multipleProductId == request.itemId
+                    && product.id == request.itemId
                     && product.multipleItems.toTypedArray().contentDeepEquals(request.multipleItems.toTypedArray())
             }.let { nullableItem ->
                 if (nullableItem != null) {
                     state = state.copy(
                         price = state.price + (nullableItem.singlePrice * divisionValue).toLong() * count,
                         products = state.products.map { item ->
-                            if (item is MultipleBasketModel && item.multipleProductId == request.itemId && item.multipleItems == request.multipleItems) {
+                            if (item is MultipleBasketModel && item.id == request.itemId && item.multipleItems == request.multipleItems) {
                                 item.copy(
                                     count = item.count + count
                                 )
@@ -145,10 +160,10 @@ class CartService @JvmOverloads constructor(
                     val multipleProduct = dataSource.getMultipleItemByRequest(request)
                     val singlePrice: Double = multipleProduct.sumByDouble { itemInBasket -> itemInBasket.price }
                     val addedItem = MultipleBasketModel(
+                        request.itemId,
                         singlePrice,
                         singlePrice,
                         count,
-                        request.itemId,
                         request.multipleItems
                     )
 
@@ -175,7 +190,7 @@ class CartService @JvmOverloads constructor(
                 }
             }
             is MultipleItem -> {
-                state.products.firstOrNull { it is MultipleBasketModel && it.multipleProductId == request.itemId && it.multipleItems == request.multipleItems }?.let { model ->
+                state.products.firstOrNull { it is MultipleBasketModel && it.id == request.itemId && it.multipleItems == request.multipleItems }?.let { model ->
                     state = state.copy(
                         price = state.price - (model.singlePrice * divisionValue).toLong() * count,
                         products = state.products - (model as MultipleBasketModel).copy(count = count)
@@ -189,7 +204,7 @@ class CartService @JvmOverloads constructor(
         state = CartStateModel()
     }
 
-    companion object {
+    private companion object {
         private const val STANDARD_DIVISION_VALUE = 100
     }
 }

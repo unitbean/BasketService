@@ -13,7 +13,16 @@ apply(plugin = "com.vanniktech.maven.publish")
 
 plugins {
     id("com.android.library")
+    id("org.jetbrains.dokka")
     kotlin("android")
+}
+
+repositories {
+    mavenCentral()
+}
+
+tasks.dokkaJavadoc.configure {
+    outputDirectory.set(buildDir.resolve("javadoc"))
 }
 
 android {
@@ -28,7 +37,7 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

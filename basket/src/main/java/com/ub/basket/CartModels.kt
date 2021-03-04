@@ -1,7 +1,7 @@
 package com.ub.basket
 
 /**
- * TODO
+ * Model for transferring the result of requesting product data from an external source.
  */
 class CartDataRequestWrapper(
     val id: String,
@@ -17,16 +17,17 @@ internal data class CartStateModel(
  * Base class for the cart product items
  */
 sealed class BasketModel {
+    abstract val id: String
     abstract val price: Double
     abstract val singlePrice: Double
     abstract val count: Int
 }
 
 /**
- * TODO
+ * Single item model for internal shopping cart logic
  */
 data class SingleBasketModel(
-    val id: String,
+    override val id: String,
     val variant: String?,
     override val price: Double,
     override val singlePrice: Double,
@@ -51,13 +52,13 @@ data class SingleBasketModel(
 }
 
 /**
- * TODO
+ * Product model with multiple sub-items for the internal logic of the cart
  */
 data class MultipleBasketModel(
+    override val id: String,
     override val price: Double,
     override val singlePrice: Double,
     override val count: Int,
-    val multipleProductId: String,
     val multipleItems: List<CartMultipleItemRequest>
 ) : BasketModel() {
 
@@ -65,14 +66,14 @@ data class MultipleBasketModel(
         if (this === other) return true
         if (other !is MultipleBasketModel) return false
 
-        if (multipleProductId != other.multipleProductId) return false
+        if (id != other.id) return false
         if (!multipleItems.toTypedArray().contentDeepEquals(other.multipleItems.toTypedArray())) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = multipleProductId.hashCode()
+        var result = id.hashCode()
         result = 31 * result + multipleItems.hashCode()
         return result
     }
@@ -94,17 +95,19 @@ class WrongCountCartRequestException(message: String) : CartServiceException(mes
 class ProductNotFoundException(message: String) : CartServiceException(message)
 
 /**
- * TODO
+ * Public class for creating all types of cart interaction requests
  */
 sealed class BasketRequest {
     companion object {
+        @JvmStatic
         fun item(itemId: String, variantId: String? = null): SingleItem = SingleItem(itemId, variantId)
+        @JvmStatic
         fun multipleItem(itemId: String, multipleItems: List<CartMultipleItemRequest>): MultipleItem = MultipleItem(itemId, multipleItems)
     }
 }
 
 /**
- * TODO
+ * Internal model of a cart interaction request
  */
 data class SingleItem(
     val itemId: String,
@@ -112,7 +115,7 @@ data class SingleItem(
 ) : BasketRequest()
 
 /**
- * TODO
+ * Internal model of a cart interaction request
  */
 data class MultipleItem(
     val itemId: String,
@@ -120,11 +123,12 @@ data class MultipleItem(
 ) : BasketRequest()
 
 /**
- * TODO
+ * Internal sub-model for multiple request model
  */
 data class CartMultipleItemRequest(
     val itemId: String,
-    val variantId: String? = null
+    val variantId: String? = null,
+    val count: Int = 1
 )
 
 internal operator fun List<BasketModel>.plus(otherList: List<BasketModel>): List<BasketModel> {

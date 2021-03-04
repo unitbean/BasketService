@@ -207,6 +207,89 @@ class MultipleItemOperationsUnitTest {
         }
     }
 
+    @Test
+    fun add_multi_different_variant_isCorrect() {
+        runBlocking {
+            cartService.addItem(
+                BasketRequest.multipleItem(
+                    "testId1",
+                    listOf(
+                        CartMultipleItemRequest("testSubId100"),
+                        CartMultipleItemRequest("testSubId100", "subVariant50", 1)
+                    )
+                )
+            )
+            cartService.addItem(
+                BasketRequest.multipleItem(
+                    "testId1",
+                    listOf(
+                        CartMultipleItemRequest("testSubId100"),
+                        CartMultipleItemRequest("testSubId100", "subVariant50", 2)
+                    )
+                )
+            )
+            assertEquals(2, cartService.getCartItems().sumBy { it.count })
+        }
+    }
+
+    @Test
+    fun add_multi_different_variant_deep_isCorrect() {
+        runBlocking {
+            cartService.addItem(
+                BasketRequest.multipleItem(
+                    "testId1",
+                    listOf(
+                        CartMultipleItemRequest("testSubId100", count = 1),
+                        CartMultipleItemRequest("testSubId100", "subVariant50", count = 1)
+                    )
+                )
+            )
+            cartService.addItem(
+                BasketRequest.multipleItem(
+                    "testId1",
+                    listOf(
+                        CartMultipleItemRequest("testSubId100", count = 1),
+                        CartMultipleItemRequest("testSubId100", "subVariant50", count = 2)
+                    )
+                )
+            )
+            assertEquals(1 + 1 + 1 + 2, cartService.getCartItems().sumBy { model ->
+                (model as MultipleBasketModel).multipleItems.sumBy { subItem ->
+                    subItem.count
+                }
+            })
+        }
+    }
+
+    @Test
+    fun add_multi_equal_variant_deep_isCorrect() {
+        runBlocking {
+            cartService.addItem(
+                BasketRequest.multipleItem(
+                    "testId1",
+                    listOf(
+                        CartMultipleItemRequest("testSubId100", count = 1),
+                        CartMultipleItemRequest("testSubId100", "subVariant50", count = 2)
+                    )
+                )
+            )
+            cartService.addItem(
+                BasketRequest.multipleItem(
+                    "testId1",
+                    listOf(
+                        CartMultipleItemRequest("testSubId100", count = 1),
+                        CartMultipleItemRequest("testSubId100", "subVariant50", count = 2)
+                    )
+                )
+            )
+            assertEquals((1 + 2) * 2, cartService.getCartItems().sumBy { model ->
+                (model as MultipleBasketModel).multipleItems.sumBy { subItem ->
+                    subItem.count * model.count
+                }
+            })
+        }
+    }
+
     companion object {
         private const val WRONG_ID = "wrong_id"
     }

@@ -41,7 +41,7 @@ class SingleItemOperationsUnitTest {
     @Test
     fun add_single_isCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.item("testId1"))
+            cartService.addItem(BasketRequest.item("testId1"))
             assertEquals(1, cartService.getCartItems().sumBy { it.count })
         }
     }
@@ -49,8 +49,8 @@ class SingleItemOperationsUnitTest {
     @Test
     fun add_single_and_remove_isCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.item("testId1"))
-            cartService.removeItem(BasketChangeRequest.item("testId1"))
+            cartService.addItem(BasketRequest.item("testId1"))
+            cartService.removeItem(BasketRequest.item("testId1"))
             assertEquals(0, cartService.getCartItems().sumBy { it.count })
         }
     }
@@ -58,8 +58,17 @@ class SingleItemOperationsUnitTest {
     @Test
     fun add_double_isCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.item("testId1"))
-            cartService.addItem(BasketChangeRequest.item("testId1"))
+            cartService.addItem(BasketRequest.item("testId1"))
+            cartService.addItem(BasketRequest.item("testId1"))
+            assertEquals(2, cartService.getCartItems().sumBy { it.count })
+        }
+    }
+
+    @Test
+    fun add_double_variant_isCorrect() {
+        runBlocking {
+            cartService.addItem(BasketRequest.item("testId1"))
+            cartService.addItem(BasketRequest.item("testId1", "testSubId50"))
             assertEquals(2, cartService.getCartItems().sumBy { it.count })
         }
     }
@@ -67,7 +76,7 @@ class SingleItemOperationsUnitTest {
     @Test
     fun add_double_count_isCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.item("testId1"), count = 2)
+            cartService.addItem(BasketRequest.item("testId1"), count = 2)
             assertEquals(2, cartService.getCartItems().sumBy { it.count })
         }
     }
@@ -75,7 +84,7 @@ class SingleItemOperationsUnitTest {
     @Test
     fun add_single_count_sum_isCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.item("testId1"))
+            cartService.addItem(BasketRequest.item("testId1"))
             assertEquals(500.0, cartService.getCartPrice(), 0.0)
         }
     }
@@ -83,7 +92,7 @@ class SingleItemOperationsUnitTest {
     @Test
     fun add_double_count_sum_isCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.item("testId1"), count = 2)
+            cartService.addItem(BasketRequest.item("testId1"), count = 2)
             assertEquals(1000.0, cartService.getCartPrice(), 0.0)
         }
     }
@@ -91,8 +100,8 @@ class SingleItemOperationsUnitTest {
     @Test
     fun add_double_count_different_items_isCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.item("testId1"))
-            cartService.addItem(BasketChangeRequest.item("testId2"))
+            cartService.addItem(BasketRequest.item("testId1"))
+            cartService.addItem(BasketRequest.item("testId2"))
             assertEquals(2, cartService.getCartItems().sumBy { it.count })
         }
     }
@@ -100,8 +109,8 @@ class SingleItemOperationsUnitTest {
     @Test
     fun add_single_and_remove_wrong_position_isCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.item("testId1"))
-            cartService.removeItem(BasketChangeRequest.item("testId2"))
+            cartService.addItem(BasketRequest.item("testId1"))
+            cartService.removeItem(BasketRequest.item("testId2"))
             assertEquals(1, cartService.getCartItems().sumBy { it.count })
         }
     }
@@ -109,8 +118,8 @@ class SingleItemOperationsUnitTest {
     @Test
     fun add_single_and_remove_double_wrong_position_isCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.item("testId1"), 3)
-            cartService.removeItem(BasketChangeRequest.item("testId1"), 2)
+            cartService.addItem(BasketRequest.item("testId1"), 3)
+            cartService.removeItem(BasketRequest.item("testId1"), 2)
             assertEquals(1, cartService.getCartItems().sumBy { it.count })
         }
     }
@@ -118,21 +127,21 @@ class SingleItemOperationsUnitTest {
     @Test(expected = WrongCountCartRequestException::class)
     fun add_single_zero_items_isNotCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.item("testId1"), 0)
+            cartService.addItem(BasketRequest.item("testId1"), 0)
         }
     }
 
-    @Test(expected = IllegalStateException::class)
+    @Test(expected = ProductNotFoundException::class)
     fun add_single_wrong_item_isNotCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.item(WRONG_ID))
+            cartService.addItem(BasketRequest.item(WRONG_ID))
         }
     }
 
     @Test
     fun add_and_clear_isCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.item("testId1"), 5)
+            cartService.addItem(BasketRequest.item("testId1"), 5)
             cartService.clearBasket()
             assertEquals(0, cartService.getCartItems().sumBy { it.count })
             assertEquals(0.0, cartService.getCartPrice(), 0.0)
@@ -142,8 +151,8 @@ class SingleItemOperationsUnitTest {
     @Test
     fun add_and_get_count_isCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.item("testId1"), 2)
-            val count = cartService.getCountInCart(BasketChangeRequest.item("testId1"))
+            cartService.addItem(BasketRequest.item("testId1"), 2)
+            val count = cartService.getCountInCart(BasketRequest.item("testId1"))
             assertEquals(2, count)
         }
     }
@@ -151,8 +160,8 @@ class SingleItemOperationsUnitTest {
     @Test
     fun add_and_get_wrong_count_isCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.item("testId1"), 2)
-            val count = cartService.getCountInCart(BasketChangeRequest.item("testId2"))
+            cartService.addItem(BasketRequest.item("testId1"), 2)
+            val count = cartService.getCountInCart(BasketRequest.item("testId2"))
             assertEquals(0, count)
         }
     }
@@ -160,7 +169,7 @@ class SingleItemOperationsUnitTest {
     @Test
     fun get_empty_isCorrect() {
         runBlocking {
-            val count = cartService.getCountInCart(BasketChangeRequest.item("testId1"))
+            val count = cartService.getCountInCart(BasketRequest.item("testId1"))
             assertEquals(0, count)
         }
     }
@@ -168,8 +177,8 @@ class SingleItemOperationsUnitTest {
     @Test(timeout = 200)
     fun add_long_query_cache_isCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.item(LONG_QUERY))
-            cartService.addItem(BasketChangeRequest.item(LONG_QUERY))
+            cartService.addItem(BasketRequest.item(LONG_QUERY))
+            cartService.addItem(BasketRequest.item(LONG_QUERY))
             assertEquals(2, cartService.getCartItems().sumBy { it.count })
         }
     }
@@ -177,11 +186,11 @@ class SingleItemOperationsUnitTest {
     @Test
     fun add_different_prices_isCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.item("testId100"))
-            cartService.addItem(BasketChangeRequest.item("testId250"))
-            cartService.addItem(BasketChangeRequest.item("testId100", "testSubId50"))
-            cartService.addItem(BasketChangeRequest.item("testId100", "testSubId75"))
-            cartService.addItem(BasketChangeRequest.item("testId500"))
+            cartService.addItem(BasketRequest.item("testId100"))
+            cartService.addItem(BasketRequest.item("testId250"))
+            cartService.addItem(BasketRequest.item("testId100", "testSubId50"))
+            cartService.addItem(BasketRequest.item("testId100", "testSubId75"))
+            cartService.addItem(BasketRequest.item("testId500"))
             assertEquals(100.0 + 250.0 + + 150.0 + 175.0 + 500.0, cartService.getCartPrice(), 0.0)
         }
     }

@@ -9,7 +9,7 @@ class CartDataRequestWrapper(
 )
 
 internal data class CartStateModel(
-    val price: Double = 0.0,
+    val price: Long = 0L,
     val products: List<BasketModel> = listOf()
 )
 
@@ -31,7 +31,7 @@ data class SingleBasketModel(
     override val price: Double,
     override val singlePrice: Double,
     override val count: Int
-): BasketModel() {
+) : BasketModel() {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -78,12 +78,25 @@ data class MultipleBasketModel(
     }
 }
 
-class WrongCountCartRequestException(message: String) : Exception(message)
+/**
+ * Base class for exceptions when working with the cart service
+ */
+sealed class CartServiceException(message: String) : Exception(message)
+
+/**
+ * Exception displaying the wrong count of products when trying to change the cart
+ */
+class WrongCountCartRequestException(message: String) : CartServiceException(message)
+
+/**
+ * Exception showing the absence of the added product in the data source [ICartDataSource]
+ */
+class ProductNotFoundException(message: String) : CartServiceException(message)
 
 /**
  * TODO
  */
-sealed class BasketChangeRequest {
+sealed class BasketRequest {
     companion object {
         fun item(itemId: String, variantId: String? = null): SingleItem = SingleItem(itemId, variantId)
         fun multipleItem(itemId: String, multipleItems: List<CartMultipleItemRequest>): MultipleItem = MultipleItem(itemId, multipleItems)
@@ -96,7 +109,7 @@ sealed class BasketChangeRequest {
 data class SingleItem(
     val itemId: String,
     val variantId: String? = null
-) : BasketChangeRequest()
+) : BasketRequest()
 
 /**
  * TODO
@@ -104,7 +117,7 @@ data class SingleItem(
 data class MultipleItem(
     val itemId: String,
     val multipleItems: List<CartMultipleItemRequest>
-) : BasketChangeRequest()
+) : BasketRequest()
 
 /**
  * TODO
@@ -114,7 +127,7 @@ data class CartMultipleItemRequest(
     val variantId: String? = null
 )
 
-internal operator fun List<BasketModel>.plus(otherList: List<BasketModel>) : List<BasketModel> {
+internal operator fun List<BasketModel>.plus(otherList: List<BasketModel>): List<BasketModel> {
     val baseList = this.toMutableList()
     val otherItems = otherList.toMutableList()
 
@@ -140,11 +153,11 @@ internal operator fun List<BasketModel>.plus(otherList: List<BasketModel>) : Lis
     return baseList
 }
 
-internal operator fun List<BasketModel>.plus(otherItem: BasketModel) : List<BasketModel> {
+internal operator fun List<BasketModel>.plus(otherItem: BasketModel): List<BasketModel> {
     return this.plus(listOf(otherItem))
 }
 
-internal operator fun List<BasketModel>.minus(otherList: List<BasketModel>) : List<BasketModel> {
+internal operator fun List<BasketModel>.minus(otherList: List<BasketModel>): List<BasketModel> {
     val baseList = this.toMutableList()
 
     val iterator = baseList.iterator()
@@ -170,6 +183,6 @@ internal operator fun List<BasketModel>.minus(otherList: List<BasketModel>) : Li
     return baseList
 }
 
-internal operator fun List<BasketModel>.minus(otherItem: BasketModel) : List<BasketModel> {
+internal operator fun List<BasketModel>.minus(otherItem: BasketModel): List<BasketModel> {
     return this.minus(listOf(otherItem))
 }

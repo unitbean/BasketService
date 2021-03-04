@@ -1,3 +1,16 @@
+buildscript {
+    repositories {
+        maven {
+            url = uri("https://plugins.gradle.org/m2/")
+        }
+    }
+    dependencies {
+        classpath("com.vanniktech:gradle-maven-publish-plugin:0.14.2")
+    }
+}
+
+apply(plugin = "com.vanniktech.maven.publish")
+
 plugins {
     id("com.android.library")
     kotlin("android")

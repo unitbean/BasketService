@@ -10,7 +10,7 @@ import kotlin.properties.Delegates
  */
 interface ICartRead {
     fun getCartPrice(): Double
-    fun getCountInCart(request: BasketChangeRequest): Int
+    fun getCountInCart(request: BasketRequest): Int
     fun getCartItems(): List<BasketModel>
 }
 
@@ -23,8 +23,25 @@ interface ICartRead {
  * in the operation of the function
  */
 interface ICartChange {
-    suspend fun addItem(request: BasketChangeRequest, count: Int = 1)
-    suspend fun removeItem(request: BasketChangeRequest, count: Int = 1)
+    /**
+     * Changes the state of the cart if new items are added to it by request
+     *
+     * @throws WrongCountCartRequestException - throws if the [count] is less than 0
+     * @throws ProductNotFoundException - throws if the item was not found in
+     * the data source [ICartDataSource.getItemByRequest] from [SingleItem] request
+     */
+    suspend fun addItem(request: BasketRequest, count: Int = 1)
+
+    /**
+     * Changes the state of the cart if the items contained in it are removed from it by request
+     *
+     * @throws WrongCountCartRequestException - throws an exception if the [count] is less than 0
+     */
+    suspend fun removeItem(request: BasketRequest, count: Int = 1)
+
+    /**
+     * Fully resets the cart state
+     */
     fun clearBasket()
 }
 
@@ -43,7 +60,10 @@ interface ICartDataSource {
 /**
  * TODO
  */
-class CartService(private val dataSource: ICartDataSource) : ICartRead, ICartChange {
+class CartService @JvmOverloads constructor(
+    private val dataSource: ICartDataSource,
+    private val divisionValue: Int = STANDARD_DIVISION_VALUE
+) : ICartRead, ICartChange {
 
     private var state: CartStateModel by Delegates.observable(CartStateModel()) { _, _, newState ->
         newState.hashCode()
@@ -51,7 +71,7 @@ class CartService(private val dataSource: ICartDataSource) : ICartRead, ICartCha
 
     override fun getCartItems(): List<BasketModel> = state.products
 
-    override fun getCountInCart(request: BasketChangeRequest): Int {
+    override fun getCountInCart(request: BasketRequest): Int {
         return state.products.firstOrNull {
             when (request) {
                 is SingleItem -> (it as? SingleBasketModel)?.id == request.itemId && (it as? SingleBasketModel)?.variant == request.variantId
@@ -60,9 +80,9 @@ class CartService(private val dataSource: ICartDataSource) : ICartRead, ICartCha
         }?.count ?: 0
     }
 
-    override fun getCartPrice(): Double = state.price
+    override fun getCartPrice(): Double = state.price / divisionValue.toDouble()
 
-    override suspend fun addItem(request: BasketChangeRequest, count: Int) {
+    override suspend fun addItem(request: BasketRequest, count: Int) {
         if (count < 1) throw WrongCountCartRequestException("Count to add must be greater than 0. Now is $count")
         when (request) {
             is SingleItem -> state.products.firstOrNull { product ->
@@ -72,7 +92,7 @@ class CartService(private val dataSource: ICartDataSource) : ICartRead, ICartCha
             }.let { nullableItem ->
                 if (nullableItem != null) {
                     state = state.copy(
-                        price = state.price + nullableItem.singlePrice * count,
+                        price = state.price + (nullableItem.singlePrice * divisionValue).toLong() * count,
                         products = state.products.map { item ->
                             if (item is SingleBasketModel && item.id == request.itemId && item.variant == request.variantId) {
                                 item.copy(
@@ -85,7 +105,7 @@ class CartService(private val dataSource: ICartDataSource) : ICartRead, ICartCha
                     )
                 } else {
                     val product = dataSource.getItemByRequest(request)
-                        ?: throw IllegalStateException("Item for id ${request.itemId} is null")
+                        ?: throw ProductNotFoundException("Item for id ${request.itemId} is null")
 
                     val addedItem = SingleBasketModel(
                         product.id,
@@ -98,7 +118,7 @@ class CartService(private val dataSource: ICartDataSource) : ICartRead, ICartCha
                     val additionalList = listOf(addedItem)
 
                     state = state.copy(
-                        price = state.price + addedItem.singlePrice * count,
+                        price = state.price + (addedItem.singlePrice * divisionValue).toLong() * count,
                         products = state.products + additionalList
                     )
                 }
@@ -110,7 +130,7 @@ class CartService(private val dataSource: ICartDataSource) : ICartRead, ICartCha
             }.let { nullableItem ->
                 if (nullableItem != null) {
                     state = state.copy(
-                        price = state.price + nullableItem.singlePrice * count,
+                        price = state.price + (nullableItem.singlePrice * divisionValue).toLong() * count,
                         products = state.products.map { item ->
                             if (item is MultipleBasketModel && item.multipleProductId == request.itemId && item.multipleItems == request.multipleItems) {
                                 item.copy(
@@ -135,7 +155,7 @@ class CartService(private val dataSource: ICartDataSource) : ICartRead, ICartCha
                     val additionalList = listOf(addedItem)
 
                     state = state.copy(
-                        price = state.price + addedItem.singlePrice * count,
+                        price = state.price + (addedItem.singlePrice * divisionValue).toLong() * count,
                         products = state.products + additionalList
                     )
                 }
@@ -143,13 +163,13 @@ class CartService(private val dataSource: ICartDataSource) : ICartRead, ICartCha
         }
     }
 
-    override suspend fun removeItem(request: BasketChangeRequest, count: Int) {
+    override suspend fun removeItem(request: BasketRequest, count: Int) {
         if (count < 1) throw WrongCountCartRequestException("Count to remove must be greater than 0. Now is $count")
         when (request) {
             is SingleItem -> {
                 state.products.firstOrNull { it is SingleBasketModel && it.id == request.itemId && it.variant == request.variantId }?.let { model ->
                     state = state.copy(
-                        price = state.price - model.singlePrice * count,
+                        price = state.price - (model.singlePrice * divisionValue).toLong() * count,
                         products = state.products - (model as SingleBasketModel).copy(count = count)
                     )
                 }
@@ -157,7 +177,7 @@ class CartService(private val dataSource: ICartDataSource) : ICartRead, ICartCha
             is MultipleItem -> {
                 state.products.firstOrNull { it is MultipleBasketModel && it.multipleProductId == request.itemId && it.multipleItems == request.multipleItems }?.let { model ->
                     state = state.copy(
-                        price = state.price - model.singlePrice * count,
+                        price = state.price - (model.singlePrice * divisionValue).toLong() * count,
                         products = state.products - (model as MultipleBasketModel).copy(count = count)
                     )
                 }
@@ -167,5 +187,9 @@ class CartService(private val dataSource: ICartDataSource) : ICartRead, ICartCha
 
     override fun clearBasket() {
         state = CartStateModel()
+    }
+
+    companion object {
+        private const val STANDARD_DIVISION_VALUE = 100
     }
 }

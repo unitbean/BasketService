@@ -38,7 +38,7 @@ class MultipleItemOperationsUnitTest {
     @Test
     fun add_single_isCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.multipleItem("testId1", listOf(CartMultipleItemRequest("testSubId1"))))
+            cartService.addItem(BasketRequest.multipleItem("testId1", listOf(CartMultipleItemRequest("testSubId1"))))
             assertEquals(1, cartService.getCartItems().sumBy { it.count })
         }
     }
@@ -47,7 +47,7 @@ class MultipleItemOperationsUnitTest {
     fun add_multi_isCorrect() {
         runBlocking {
             cartService.addItem(
-                BasketChangeRequest.multipleItem(
+                BasketRequest.multipleItem(
                     "testId1",
                     listOf(
                         CartMultipleItemRequest("testSubId1"),
@@ -63,10 +63,34 @@ class MultipleItemOperationsUnitTest {
     }
 
     @Test
+    fun add_multi_variant_isCorrect() {
+        runBlocking {
+            cartService.addItem(
+                BasketRequest.multipleItem(
+                    "testId1",
+                    listOf(
+                        CartMultipleItemRequest("testSubId100")
+                    )
+                )
+            )
+            cartService.addItem(
+                BasketRequest.multipleItem(
+                    "testId2",
+                    listOf(
+                        CartMultipleItemRequest("testSubId100"),
+                        CartMultipleItemRequest("testSubId100", "subVariant50")
+                    )
+                )
+            )
+            assertEquals(2, cartService.getCartItems().sumBy { it.count })
+        }
+    }
+
+    @Test
     fun add_multi_total_price_isCorrect() {
         runBlocking {
             cartService.addItem(
-                BasketChangeRequest.multipleItem(
+                BasketRequest.multipleItem(
                     "testId1",
                     listOf(
                         CartMultipleItemRequest("testSubId100"),
@@ -86,7 +110,7 @@ class MultipleItemOperationsUnitTest {
     fun add_multi_double_different_count_isCorrect() {
         runBlocking {
             cartService.addItem(
-                BasketChangeRequest.multipleItem(
+                BasketRequest.multipleItem(
                     "testId1",
                     listOf(
                         CartMultipleItemRequest("testSubId3"),
@@ -95,7 +119,7 @@ class MultipleItemOperationsUnitTest {
                 )
             )
             cartService.addItem(
-                BasketChangeRequest.multipleItem(
+                BasketRequest.multipleItem(
                     "testId1",
                     listOf(
                         CartMultipleItemRequest("testSubId2"),
@@ -112,7 +136,7 @@ class MultipleItemOperationsUnitTest {
     fun add_multi_double_same_count_isCorrect() {
         runBlocking {
             cartService.addItem(
-                BasketChangeRequest.multipleItem(
+                BasketRequest.multipleItem(
                     "testId1",
                     listOf(
                         CartMultipleItemRequest("testSubId1"),
@@ -121,7 +145,7 @@ class MultipleItemOperationsUnitTest {
                 )
             )
             cartService.addItem(
-                BasketChangeRequest.multipleItem(
+                BasketRequest.multipleItem(
                     "testId1",
                     listOf(
                         CartMultipleItemRequest("testSubId1"),
@@ -137,7 +161,7 @@ class MultipleItemOperationsUnitTest {
     fun add_multi_double_count_isCorrect() {
         runBlocking {
             cartService.addItem(
-                BasketChangeRequest.multipleItem(
+                BasketRequest.multipleItem(
                     "testId1",
                     listOf(
                         CartMultipleItemRequest("testSubId1"),
@@ -154,7 +178,7 @@ class MultipleItemOperationsUnitTest {
     fun remove_single_count_isCorrect() {
         runBlocking {
             cartService.addItem(
-                BasketChangeRequest.multipleItem(
+                BasketRequest.multipleItem(
                     "testId1",
                     listOf(
                         CartMultipleItemRequest("testSubId1"),
@@ -164,7 +188,7 @@ class MultipleItemOperationsUnitTest {
                 2
             )
             cartService.removeItem(
-                BasketChangeRequest.multipleItem(
+                BasketRequest.multipleItem(
                     "testId1",
                     listOf(
                         CartMultipleItemRequest("testSubId1"),
@@ -179,7 +203,7 @@ class MultipleItemOperationsUnitTest {
     @Test(expected = WrongCountCartRequestException::class)
     fun add_single_zero_items_isNotCorrect() {
         runBlocking {
-            cartService.addItem(BasketChangeRequest.multipleItem("testId1", listOf(CartMultipleItemRequest("testSubId1"))), 0)
+            cartService.addItem(BasketRequest.multipleItem("testId1", listOf(CartMultipleItemRequest("testSubId1"))), 0)
         }
     }
 

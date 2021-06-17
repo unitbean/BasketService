@@ -158,7 +158,7 @@ class CartService @JvmOverloads constructor(
                     )
                 } else {
                     val multipleProduct = dataSource.getMultipleItemByRequest(request)
-                    val singlePrice: Double = multipleProduct.sumByDouble { itemInBasket -> itemInBasket.price }
+                    val singlePrice: Double = multipleProduct.sumOf { itemInBasket -> itemInBasket.price }
                     val addedItem = MultipleBasketModel(
                         request.itemId,
                         singlePrice,

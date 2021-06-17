@@ -1,28 +1,16 @@
-buildscript {
-    repositories {
-        maven {
-            url = uri("https://plugins.gradle.org/m2/")
-        }
-    }
-    dependencies {
-        classpath("com.vanniktech:gradle-maven-publish-plugin:0.14.2")
-    }
-}
-
-apply(plugin = "com.vanniktech.maven.publish")
-
 plugins {
     id("com.android.library")
     id("org.jetbrains.dokka")
+    id("com.vanniktech.maven.publish")
     kotlin("android")
-}
-
-repositories {
-    mavenCentral()
 }
 
 tasks.dokkaJavadoc.configure {
     outputDirectory.set(buildDir.resolve("javadoc"))
+}
+
+mavenPublish {
+    sonatypeHost = com.vanniktech.maven.publish.SonatypeHost.S01
 }
 
 android {
@@ -59,7 +47,7 @@ android {
 dependencies {
     implementation(kotlin("stdlib-jdk7", org.jetbrains.kotlin.config.KotlinCompilerVersion.VERSION))
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.2")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.3.0")
 }

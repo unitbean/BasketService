@@ -1,10 +1,11 @@
 package com.ub.basket
 
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectIndexed
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Test
-
-import org.junit.Assert.*
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -42,7 +43,7 @@ class SingleItemOperationsUnitTest {
     fun add_single_isCorrect() {
         runBlocking {
             cartService.addItem(BasketRequest.item("testId1"))
-            assertEquals(1, cartService.getCartItems().sumBy { it.count })
+            assertEquals(1, cartService.getCartItems().sumOf { it.count })
         }
     }
 
@@ -51,7 +52,7 @@ class SingleItemOperationsUnitTest {
         runBlocking {
             cartService.addItem(BasketRequest.item("testId1"))
             cartService.removeItem(BasketRequest.item("testId1"))
-            assertEquals(0, cartService.getCartItems().sumBy { it.count })
+            assertEquals(0, cartService.getCartItems().sumOf { it.count })
         }
     }
 
@@ -60,7 +61,7 @@ class SingleItemOperationsUnitTest {
         runBlocking {
             cartService.addItem(BasketRequest.item("testId1"))
             cartService.addItem(BasketRequest.item("testId1"))
-            assertEquals(2, cartService.getCartItems().sumBy { it.count })
+            assertEquals(2, cartService.getCartItems().sumOf { it.count })
         }
     }
 
@@ -69,7 +70,7 @@ class SingleItemOperationsUnitTest {
         runBlocking {
             cartService.addItem(BasketRequest.item("testId1"))
             cartService.addItem(BasketRequest.item("testId1", "testSubId50"))
-            assertEquals(2, cartService.getCartItems().sumBy { it.count })
+            assertEquals(2, cartService.getCartItems().sumOf { it.count })
         }
     }
 
@@ -77,7 +78,7 @@ class SingleItemOperationsUnitTest {
     fun add_double_count_isCorrect() {
         runBlocking {
             cartService.addItem(BasketRequest.item("testId1"), count = 2)
-            assertEquals(2, cartService.getCartItems().sumBy { it.count })
+            assertEquals(2, cartService.getCartItems().sumOf { it.count })
         }
     }
 
@@ -102,7 +103,7 @@ class SingleItemOperationsUnitTest {
         runBlocking {
             cartService.addItem(BasketRequest.item("testId1"))
             cartService.addItem(BasketRequest.item("testId2"))
-            assertEquals(2, cartService.getCartItems().sumBy { it.count })
+            assertEquals(2, cartService.getCartItems().sumOf { it.count })
         }
     }
 
@@ -111,7 +112,7 @@ class SingleItemOperationsUnitTest {
         runBlocking {
             cartService.addItem(BasketRequest.item("testId1"))
             cartService.removeItem(BasketRequest.item("testId2"))
-            assertEquals(1, cartService.getCartItems().sumBy { it.count })
+            assertEquals(1, cartService.getCartItems().sumOf { it.count })
         }
     }
 
@@ -120,7 +121,7 @@ class SingleItemOperationsUnitTest {
         runBlocking {
             cartService.addItem(BasketRequest.item("testId1"), 3)
             cartService.removeItem(BasketRequest.item("testId1"), 2)
-            assertEquals(1, cartService.getCartItems().sumBy { it.count })
+            assertEquals(1, cartService.getCartItems().sumOf { it.count })
         }
     }
 
@@ -143,7 +144,7 @@ class SingleItemOperationsUnitTest {
         runBlocking {
             cartService.addItem(BasketRequest.item("testId1"), 5)
             cartService.clearBasket()
-            assertEquals(0, cartService.getCartItems().sumBy { it.count })
+            assertEquals(0, cartService.getCartItems().sumOf { it.count })
             assertEquals(0.0, cartService.getCartPrice(), 0.0)
         }
     }
@@ -179,7 +180,7 @@ class SingleItemOperationsUnitTest {
         runBlocking {
             cartService.addItem(BasketRequest.item(LONG_QUERY))
             cartService.addItem(BasketRequest.item(LONG_QUERY))
-            assertEquals(2, cartService.getCartItems().sumBy { it.count })
+            assertEquals(2, cartService.getCartItems().sumOf { it.count })
         }
     }
 
@@ -191,7 +192,98 @@ class SingleItemOperationsUnitTest {
             cartService.addItem(BasketRequest.item("testId100", "testSubId50"))
             cartService.addItem(BasketRequest.item("testId100", "testSubId75"))
             cartService.addItem(BasketRequest.item("testId500"))
-            assertEquals(100.0 + 250.0 + + 150.0 + 175.0 + 500.0, cartService.getCartPrice(), 0.0)
+            assertEquals(100.0 + 250.0 + 150.0 + 175.0 + 500.0, cartService.getCartPrice(), 0.0)
+        }
+    }
+
+    @Test
+    fun add_different_items_flow_isCorrect() {
+        runBlocking {
+            var cartChangesCount = 0
+            val cartJob = launch {
+                cartService.stateFlow.collectIndexed { index, state ->
+                    assert(
+                        when (index) {
+                            0 -> 100.0
+                            1 -> 350.0
+                            2 -> 500.0
+                            3 -> 675.0
+                            4 -> 1175.0
+                            5 -> 925.0
+                            else -> null
+                        } == state.price
+                    ) {
+                        print("price of basket for index $index is incorrect: ${state.price}")
+                    }
+                    cartChangesCount++
+                }
+            }
+
+            cartService.addItem(BasketRequest.item("testId100"))
+            delay(1)
+            cartService.addItem(BasketRequest.item("testId250"))
+            delay(1)
+            cartService.addItem(BasketRequest.item("testId100", "testSubId50"))
+            delay(1)
+            cartService.addItem(BasketRequest.item("testId100", "testSubId75"))
+            delay(1)
+            cartService.addItem(BasketRequest.item("testId500"))
+            delay(1)
+            cartService.removeItem(BasketRequest.item("testId250"))
+            delay(1)
+            cartJob.cancel()
+            assertEquals(6, cartChangesCount)
+        }
+    }
+
+    @Test
+    fun add_one_item_and_clear_flow_isCorrect() {
+        runBlocking {
+            var cartChangesCount = 0
+            val cartJob = launch {
+                cartService.stateFlow.collectIndexed { index, state ->
+                    assert(
+                        when (index) {
+                            0 -> 250.0
+                            1 -> 0.0
+                            else -> null
+                        } == state.price
+                    ) {
+                        print("price of basket for index $index is incorrect: ${state.price}")
+                    }
+                    cartChangesCount++
+                }
+            }
+            cartService.addItem(BasketRequest.item("testId250"))
+            delay(1)
+            cartService.clearBasket()
+            delay(1)
+            cartJob.cancel()
+            assertEquals(2, cartChangesCount)
+        }
+    }
+
+    @Test
+    fun remove_one_item_and_clear_flow_isCorrect() {
+        runBlocking {
+            var cartChangesCount = 0
+            val cartJob = launch {
+                cartService.stateFlow.collectIndexed { index, state ->
+                    assert(
+                        when (index) {
+                            0 -> 0.0
+                            else -> null
+                        } == state.price
+                    ) {
+                        print("price of basket for index $index is incorrect: ${state.price}")
+                    }
+                    cartChangesCount++
+                }
+            }
+            cartService.removeItem(BasketRequest.item("testId250"))
+            delay(1)
+            cartJob.cancel()
+            assertEquals(1, cartChangesCount)
         }
     }
 

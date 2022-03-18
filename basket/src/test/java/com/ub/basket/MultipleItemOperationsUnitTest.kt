@@ -39,7 +39,7 @@ class MultipleItemOperationsUnitTest {
     fun add_single_isCorrect() {
         runBlocking {
             cartService.addItem(BasketRequest.multipleItem("testId1", listOf(CartMultipleItemRequest("testSubId1"))))
-            assertEquals(1, cartService.getCartItems().sumBy { it.count })
+            assertEquals(1, cartService.getCartItems().sumOf { it.count })
         }
     }
 
@@ -58,7 +58,7 @@ class MultipleItemOperationsUnitTest {
                     )
                 )
             )
-            assertEquals(1, cartService.getCartItems().sumBy { it.count })
+            assertEquals(1, cartService.getCartItems().sumOf { it.count })
         }
     }
 
@@ -82,7 +82,7 @@ class MultipleItemOperationsUnitTest {
                     )
                 )
             )
-            assertEquals(2, cartService.getCartItems().sumBy { it.count })
+            assertEquals(2, cartService.getCartItems().sumOf { it.count })
         }
     }
 
@@ -128,7 +128,7 @@ class MultipleItemOperationsUnitTest {
                     )
                 )
             )
-            assertEquals(2, cartService.getCartItems().sumBy { it.count })
+            assertEquals(2, cartService.getCartItems().sumOf { it.count })
         }
     }
 
@@ -153,7 +153,7 @@ class MultipleItemOperationsUnitTest {
                     )
                 )
             )
-            assertEquals(2, cartService.getCartItems().sumBy { it.count })
+            assertEquals(2, cartService.getCartItems().sumOf { it.count })
         }
     }
 
@@ -170,7 +170,7 @@ class MultipleItemOperationsUnitTest {
                 ),
                 2
             )
-            assertEquals(2, cartService.getCartItems().sumBy { it.count })
+            assertEquals(2, cartService.getCartItems().sumOf { it.count })
         }
     }
 
@@ -196,7 +196,7 @@ class MultipleItemOperationsUnitTest {
                     )
                 )
             )
-            assertEquals(1, cartService.getCartItems().sumBy { it.count })
+            assertEquals(1, cartService.getCartItems().sumOf { it.count })
         }
     }
 
@@ -228,7 +228,7 @@ class MultipleItemOperationsUnitTest {
                     )
                 )
             )
-            assertEquals(2, cartService.getCartItems().sumBy { it.count })
+            assertEquals(2, cartService.getCartItems().sumOf { it.count })
         }
     }
 
@@ -253,8 +253,8 @@ class MultipleItemOperationsUnitTest {
                     )
                 )
             )
-            assertEquals(1 + 1 + 1 + 2, cartService.getCartItems().sumBy { model ->
-                (model as MultipleBasketModel).multipleItems.sumBy { subItem ->
+            assertEquals(1 + 1 + 1 + 2, cartService.getCartItems().sumOf { model ->
+                (model as MultipleBasketModel).multipleItems.sumOf { subItem ->
                     subItem.count
                 }
             })
@@ -282,8 +282,8 @@ class MultipleItemOperationsUnitTest {
                     )
                 )
             )
-            assertEquals((1 + 2) * 2, cartService.getCartItems().sumBy { model ->
-                (model as MultipleBasketModel).multipleItems.sumBy { subItem ->
+            assertEquals((1 + 2) * 2, cartService.getCartItems().sumOf { model ->
+                (model as MultipleBasketModel).multipleItems.sumOf { subItem ->
                     subItem.count * model.count
                 }
             })

@@ -8,10 +8,17 @@ class CartDataRequestWrapper(
     val price: Double
 )
 
-internal data class CartStateModel(
-    val price: Long = 0L,
+/**
+ * Basket state representation
+ */
+data class CartStateModel(
+    private val divisionValue: Int,
+    internal val innerPrice: Long = 0L,
     val products: List<BasketModel> = listOf()
-)
+) {
+    val price: Double
+        get() = innerPrice / divisionValue.toDouble()
+}
 
 /**
  * Base class for the cart product items
@@ -67,7 +74,7 @@ data class MultipleBasketModel(
         if (other !is MultipleBasketModel) return false
 
         if (id != other.id) return false
-        if (!multipleItems.toTypedArray().contentDeepEquals(other.multipleItems.toTypedArray())) return false
+        if (multipleItems != other.multipleItems) return false
 
         return true
     }

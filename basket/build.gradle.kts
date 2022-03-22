@@ -11,6 +11,7 @@ tasks.dokkaJavadoc.configure {
 
 mavenPublish {
     sonatypeHost = com.vanniktech.maven.publish.SonatypeHost.S01
+    androidVariantToPublish = "release"
 }
 
 android {

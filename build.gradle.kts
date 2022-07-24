@@ -1,14 +1,12 @@
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath("com.android.tools.build:gradle:7.1.2")
-        classpath(kotlin("gradle-plugin", version = "1.6.10"))
-        classpath("org.jetbrains.dokka:dokka-gradle-plugin:1.6.10")
-        classpath("com.vanniktech:gradle-maven-publish-plugin:0.19.0")
-    }
+extra.apply {
+    set("coroutineVer", "1.6.4")
+}
+
+plugins {
+    id("com.android.application") version "7.2.1" apply false
+    id("org.jetbrains.kotlin.android") version "1.7.10" apply false
+    id("org.jetbrains.dokka") version "1.6.10" apply false
+    id("com.vanniktech.maven.publish") version "0.21.0" apply false
 }
 
 task<Delete>("clean") {

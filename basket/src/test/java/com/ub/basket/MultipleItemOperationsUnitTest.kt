@@ -23,11 +23,11 @@ class MultipleItemOperationsUnitTest {
                     CartDataRequestWrapper(
                         request.itemId,
                         when {
-                            itemRequest.itemId.endsWith("100") && itemRequest.variantId?.endsWith("50") == true-> 150.0
-                            itemRequest.itemId.endsWith("100") && itemRequest.variantId?.endsWith("75") == true -> 175.0
-                            itemRequest.itemId.endsWith("100") -> 100.0
-                            itemRequest.itemId.endsWith("250") -> 250.0
-                            else -> 500.0
+                            itemRequest.itemId.endsWith("100") && itemRequest.variantId?.endsWith("50") == true -> 150.0 * itemRequest.count
+                            itemRequest.itemId.endsWith("100") && itemRequest.variantId?.endsWith("75") == true -> 175.0 * itemRequest.count
+                            itemRequest.itemId.endsWith("100") -> 100.0 * itemRequest.count
+                            itemRequest.itemId.endsWith("250") -> 250.0 * itemRequest.count
+                            else -> 500.0 * itemRequest.count
                         }
                     )
                 } else null
@@ -287,6 +287,49 @@ class MultipleItemOperationsUnitTest {
                     subItem.count * model.count
                 }
             })
+        }
+    }
+
+    @Test
+    fun add_multi_count_variant_price_from_null_isCorrect() {
+        runBlocking {
+            cartService.addItem(
+                BasketRequest.multipleItem(
+                    "testId1",
+                    listOf(
+                        CartMultipleItemRequest("testSubId100", "subVariant50", count = 3)
+                    )
+                )
+            )
+            assertEquals(150 * 3.0, cartService.getCartPrice(), 0.0)
+        }
+    }
+
+    @Test
+    fun add_multi_count_variant_price_with_existing_isCorrect() {
+        runBlocking {
+            cartService.addItem(
+                BasketRequest.multipleItem(
+                    "testId1",
+                    listOf(
+                        CartMultipleItemRequest("testSubId100", "subVariant50", count = 2)
+                    )
+                )
+            )
+            cartService.addItem(
+                BasketRequest.multipleItem(
+                    "testId1",
+                    listOf(
+                        CartMultipleItemRequest("testSubId100", "subVariant50", count = 2)
+                    )
+                )
+            )
+            assertEquals(
+                150 * 2.0
+                    + 150 * 2.0,
+                cartService.getCartPrice(),
+                0.0
+            )
         }
     }
 

@@ -31,11 +31,15 @@ interface ICartRead {
 interface ICartChange {
     /**
      * Changes the state of the cart if new items are added to it by request
+     *
+     * @param count items to add. Cannot be less than 1
      */
     suspend fun addItem(request: BasketRequest, count: Int = 1)
 
     /**
      * Changes the state of the cart if the items contained in it are removed from it by request
+     *
+     * @param count items to add. Cannot be less than 1
      */
     suspend fun removeItem(request: BasketRequest, count: Int = 1)
 

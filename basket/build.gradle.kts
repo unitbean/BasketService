@@ -37,12 +37,15 @@ android {
     buildFeatures {
         buildConfig = false
     }
+    packaging {
+        resources.excludes += "DebugProbesKt.bin"
+    }
 }
 
 val coroutineVer: String by project
 
 dependencies {
-    implementation(kotlin("stdlib-jdk7", KotlinCompilerVersion.VERSION))
+    implementation(kotlin("stdlib", KotlinCompilerVersion.VERSION))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutineVer")
     testImplementation("junit:junit:4.13.2")
 }

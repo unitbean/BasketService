@@ -9,7 +9,7 @@ plugins {
 }
 
 tasks.dokkaJavadoc.configure {
-    outputDirectory.set(buildDir.resolve("javadoc"))
+    outputDirectory.set(layout.buildDirectory.dir("javadoc"))
 }
 
 mavenPublishing {
@@ -19,7 +19,7 @@ mavenPublishing {
 
 android {
     namespace = "com.ub.basket"
-    compileSdk = 33
+    compileSdk = 34
     defaultConfig.minSdk = 16
     buildTypes {
         release {

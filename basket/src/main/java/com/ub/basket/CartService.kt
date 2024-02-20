@@ -5,6 +5,7 @@ package com.ub.basket
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 /**
  * Provides read-level access to the current state of the cart.
@@ -117,19 +118,20 @@ class CartService @JvmOverloads constructor(
                     && product.variant == request.variantId
             }.let { nullableItem ->
                 if (nullableItem != null) {
-                    val newState = _state.value.copy(
-                        innerPrice = _state.value.innerPrice + (nullableItem.singlePrice * divisionValue).toLong() * count,
-                        products = _state.value.products.map { item ->
-                            if (item is SingleBasketModel && item.id == request.itemId && item.variant == request.variantId) {
-                                item.copy(
-                                    count = item.count + count
-                                )
-                            } else {
-                                item
+                    _state.update { state ->
+                        state.copy(
+                            innerPrice = state.innerPrice + (nullableItem.singlePrice * divisionValue).toLong() * count,
+                            products = state.products.map { item ->
+                                if (item is SingleBasketModel && item.id == request.itemId && item.variant == request.variantId) {
+                                    item.copy(
+                                        count = item.count + count
+                                    )
+                                } else {
+                                    item
+                                }
                             }
-                        }
-                    )
-                    _state.emit(newState)
+                        )
+                    }
                 } else {
                     val product = dataSource.getItemByRequest(request)
                         ?: throw ProductNotFoundException("Item for id ${request.itemId} is null")
@@ -144,11 +146,12 @@ class CartService @JvmOverloads constructor(
 
                     val additionalList = listOf(addedItem)
 
-                    val newState = _state.value.copy(
-                        innerPrice = _state.value.innerPrice + (addedItem.singlePrice * divisionValue).toLong() * count,
-                        products = _state.value.products + additionalList
-                    )
-                    _state.emit(newState)
+                    _state.update { state ->
+                        state.copy(
+                            innerPrice = state.innerPrice + (addedItem.singlePrice * divisionValue).toLong() * count,
+                            products = state.products + additionalList
+                        )
+                    }
                 }
             }
             is MultipleItem -> _state.value.products.firstOrNull { product ->
@@ -157,19 +160,20 @@ class CartService @JvmOverloads constructor(
                     && product.multipleItems.toTypedArray().contentDeepEquals(request.multipleItems.toTypedArray())
             }.let { nullableItem ->
                 if (nullableItem != null) {
-                    val newState = _state.value.copy(
-                        innerPrice = _state.value.innerPrice + (nullableItem.singlePrice * divisionValue).toLong() * count,
-                        products = _state.value.products.map { item ->
-                            if (item is MultipleBasketModel && item.id == request.itemId && item.multipleItems == request.multipleItems) {
-                                item.copy(
-                                    count = item.count + count
-                                )
-                            } else {
-                                item
+                    _state.update {  state ->
+                        state.copy(
+                            innerPrice = state.innerPrice + (nullableItem.singlePrice * divisionValue).toLong() * count,
+                            products = state.products.map { item ->
+                                if (item is MultipleBasketModel && item.id == request.itemId && item.multipleItems == request.multipleItems) {
+                                    item.copy(
+                                        count = item.count + count
+                                    )
+                                } else {
+                                    item
+                                }
                             }
-                        }
-                    )
-                    _state.emit(newState)
+                        )
+                    }
                 } else {
                     val multipleProduct = dataSource.getMultipleItemByRequest(request)
                     val singlePrice: Double = multipleProduct.sumOf { itemInBasket -> itemInBasket.price }
@@ -183,11 +187,12 @@ class CartService @JvmOverloads constructor(
 
                     val additionalList = listOf(addedItem)
 
-                    val newState = _state.value.copy(
-                        innerPrice = _state.value.innerPrice + (addedItem.singlePrice * divisionValue).toLong() * count,
-                        products = _state.value.products + additionalList
-                    )
-                    _state.emit(newState)
+                    _state.update { state ->
+                        state.copy(
+                            innerPrice = state.innerPrice + (addedItem.singlePrice * divisionValue).toLong() * count,
+                            products = state.products + additionalList
+                        )
+                    }
                 }
             }
         }
@@ -198,27 +203,31 @@ class CartService @JvmOverloads constructor(
         when (request) {
             is SingleItem -> {
                 _state.value.products.firstOrNull { it is SingleBasketModel && it.id == request.itemId && it.variant == request.variantId }?.let { model ->
-                    val newState = _state.value.copy(
-                        innerPrice = _state.value.innerPrice - (model.singlePrice * divisionValue).toLong() * count,
-                        products = _state.value.products - (model as SingleBasketModel).copy(count = count)
-                    )
-                    _state.emit(newState)
+                    _state.update { state ->
+                        state.copy(
+                            innerPrice = state.innerPrice - (model.singlePrice * divisionValue).toLong() * count,
+                            products = state.products - (model as SingleBasketModel).copy(count = count)
+                        )
+                    }
                 }
             }
             is MultipleItem -> {
                 _state.value.products.firstOrNull { it is MultipleBasketModel && it.id == request.itemId && it.multipleItems == request.multipleItems }?.let { model ->
-                    val newState = _state.value.copy(
-                        innerPrice = _state.value.innerPrice - (model.singlePrice * divisionValue).toLong() * count,
-                        products = _state.value.products - (model as MultipleBasketModel).copy(count = count)
-                    )
-                    _state.emit(newState)
+                    _state.update { state ->
+                        state.copy(
+                            innerPrice = state.innerPrice - (model.singlePrice * divisionValue).toLong() * count,
+                            products = state.products - (model as MultipleBasketModel).copy(count = count)
+                        )
+                    }
                 }
             }
         }
     }
 
     override fun clearBasket() {
-        _state.tryEmit(CartStateModel(divisionValue = divisionValue))
+        _state.update {
+            CartStateModel(divisionValue = divisionValue)
+        }
     }
 
     private companion object {

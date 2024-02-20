@@ -115,6 +115,8 @@ sealed class BasketRequest {
 
 /**
  * Internal model of a cart interaction request
+ * @property itemId unique identifier of item
+ * @property variantId optional unique identifier of variant of item
  */
 data class SingleItem(
     val itemId: String,
@@ -123,6 +125,7 @@ data class SingleItem(
 
 /**
  * Internal model of a cart interaction request
+ * @property itemId unique identifier of item
  */
 data class MultipleItem(
     val itemId: String,
@@ -131,6 +134,8 @@ data class MultipleItem(
 
 /**
  * Internal sub-model for multiple request model
+ * @property itemId unique identifier of top level modifier item
+ * @property variantId optional unique identifier of variant of modifier item
  */
 data class CartMultipleItemRequest(
     val itemId: String,

@@ -90,9 +90,7 @@ class CartService @JvmOverloads constructor(
     private val divisionValue: Int = STANDARD_DIVISION_VALUE
 ) : ICartRead, ICartChange {
 
-    private val _state: MutableStateFlow<CartStateModel> by lazy {
-        MutableStateFlow(CartStateModel(divisionValue = divisionValue))
-    }
+    private val _state = MutableStateFlow(CartStateModel(divisionValue = divisionValue))
 
     override val stateFlow: StateFlow<CartStateModel> = _state.asStateFlow()
 

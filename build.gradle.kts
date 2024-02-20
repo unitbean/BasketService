@@ -1,12 +1,13 @@
-extra.apply {
-    set("coroutineVer", "1.7.3")
+plugins {
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.android.library) apply false
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.kotlin.dokka) apply false
+    alias(libs.plugins.maven.publish) apply false
 }
 
-plugins {
-    id("com.android.application") version "8.2.0" apply false
-    id("org.jetbrains.kotlin.android") version "1.9.21" apply false
-    id("org.jetbrains.dokka") version "1.9.10" apply false
-    id("com.vanniktech.maven.publish") version "0.25.3" apply false
+subprojects {
+    apply(plugin = "org.jetbrains.dokka")
 }
 
 task<Delete>("clean") {

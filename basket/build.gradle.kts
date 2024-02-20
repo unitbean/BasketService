@@ -1,11 +1,9 @@
-import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import com.vanniktech.maven.publish.SonatypeHost
 
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.dokka")
-    id("com.vanniktech.maven.publish")
-    kotlin("android")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.maven.publish)
+    alias(libs.plugins.kotlin.android)
 }
 
 tasks.dokkaJavadoc.configure {
@@ -34,18 +32,13 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
-    buildFeatures {
-        buildConfig = false
-    }
     packaging {
         resources.excludes += "DebugProbesKt.bin"
     }
 }
 
-val coroutineVer: String by project
-
 dependencies {
-    implementation(kotlin("stdlib", KotlinCompilerVersion.VERSION))
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutineVer")
-    testImplementation("junit:junit:4.13.2")
+    implementation(libs.kotlin)
+    implementation(libs.kotlinx.coroutines.core)
+    testImplementation(libs.junit)
 }

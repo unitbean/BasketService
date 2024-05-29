@@ -30,6 +30,9 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
+    buildFeatures {
+        viewBinding = true
+    }
 }
 
 dependencies {
@@ -39,6 +42,8 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.constraintlayout)
+    implementation(libs.recyclerview)
+    implementation(libs.viewbindingpropertydelegate.noreflection)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

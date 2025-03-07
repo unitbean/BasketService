@@ -6,10 +6,6 @@ plugins {
     alias(libs.plugins.maven.publish) apply false
 }
 
-subprojects {
-    apply(plugin = "org.jetbrains.dokka")
-}
-
 task<Delete>("clean") {
     delete = setOf(layout.buildDirectory)
 }

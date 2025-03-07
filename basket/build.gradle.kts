@@ -4,10 +4,13 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.maven.publish)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.dokka)
 }
 
-tasks.dokkaJavadoc.configure {
-    outputDirectory.set(layout.buildDirectory.dir("javadoc"))
+dokka {
+    dokkaPublications.html {
+        outputDirectory.set(layout.buildDirectory.dir("javadoc"))
+    }
 }
 
 mavenPublishing {
@@ -17,12 +20,13 @@ mavenPublishing {
 
 android {
     namespace = "com.ub.basket"
-    compileSdk = 34
+    compileSdk = 35
     defaultConfig.minSdk = 16
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            packaging.resources.excludes += "DebugProbesKt.bin"
         }
     }
     compileOptions {
@@ -32,12 +36,10 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
-    packaging {
-        resources.excludes += "DebugProbesKt.bin"
-    }
 }
 
 dependencies {
+    dokkaPlugin(libs.android.documentation.plugin)
     implementation(libs.kotlin)
     implementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.junit)
